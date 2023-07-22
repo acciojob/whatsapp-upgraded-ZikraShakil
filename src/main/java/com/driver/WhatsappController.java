@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class WhatsappController {
 
     //Autowire will not work in this case, no need to change this and add autowire
-
     WhatsappService whatsappService = new WhatsappService();
 
     @PostMapping("/add-user")
@@ -32,7 +31,7 @@ public class WhatsappController {
     }
 
     @PostMapping("/add-group")
-    public Group createGroup(List<User> users) throws Exception {
+    public Group createGroup(List<User> users){
         // The list contains at least 2 users where the first user is the admin. A group has exactly one admin.
         // If there are only 2 users, the group is a personal chat and the group name should be kept as the name of the second user(other than admin)
         // If there are 2+ users, the name of group should be "Group count". For example, the name of first group would be "Group 1", second would be "Group 2" and so on.
@@ -51,7 +50,6 @@ public class WhatsappController {
         // Return the message id.
 
         return whatsappService.createMessage(content);
-
     }
 
     @PutMapping("/send-message")
@@ -61,7 +59,6 @@ public class WhatsappController {
         //If the message is sent successfully, return the final number of messages in that group.
 
         return whatsappService.sendMessage(message, sender, group);
-
     }
     @PutMapping("/change-admin")
     public String changeAdmin(User approver, User user, Group group) throws Exception{
@@ -71,7 +68,6 @@ public class WhatsappController {
         //Change the admin of the group to "user" and return "SUCCESS". Note that at one time there is only one admin and the admin rights are transferred from approver to user.
 
         return whatsappService.changeAdmin(approver, user, group);
-
     }
 
     @DeleteMapping("/remove-user")
@@ -84,7 +80,6 @@ public class WhatsappController {
         //If user is removed successfully, return (the updated number of users in the group + the updated number of messages in group + the updated number of overall messages)
 
         return whatsappService.removeUser(user);
-
     }
 
     @GetMapping("/find-messages")
@@ -94,6 +89,5 @@ public class WhatsappController {
         // If the number of messages between given time is less than K, throw "K is greater than the number of messages" exception
 
         return whatsappService.findMessage(start, end, K);
-
     }
 }

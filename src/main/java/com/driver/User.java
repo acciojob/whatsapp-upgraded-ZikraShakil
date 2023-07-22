@@ -1,21 +1,12 @@
 package com.driver;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
-
 public class User {
     private String name;
     private String mobile;
 
-    public User() {
-    }
-
-    public User(String name, String mobile)  {
+    public User(String name, String mobile) {
         this.name = name;
         this.mobile = mobile;
-
     }
 
     public String getName() {
