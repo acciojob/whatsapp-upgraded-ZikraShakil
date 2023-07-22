@@ -1,36 +1,26 @@
 package com.driver;
 
-import org.springframework.stereotype.Repository;
-
 import java.util.*;
+
+import org.springframework.stereotype.Repository;
 
 @Repository
 public class WhatsappRepository {
 
-    private Map<String,User> userMap = new HashMap<>();
-    private Map<Integer,Message> messageMap = new HashMap<>();
-    private Integer customGroupCount;
-    private Integer messageId;
+    //Assume that each user belongs to at most one group
+    //You can use the below mentioned hashmaps or delete these and create your own.
     private HashMap<Group, List<User>> groupUserMap;
     private HashMap<Group, List<Message>> groupMessageMap;
     private HashMap<Message, User> senderMap;
     private HashMap<Group, User> adminMap;
+    private HashMap<String,User> mobileUserMap;
+    private HashMap<Integer,Message> messageMap;
+    private HashMap<String,Group> groupMap;
+    private int customGroupCount;
+    private int messageId;
 
-
-    public WhatsappRepository(){
-        this.groupMessageMap = new HashMap<Group, List<Message>>(); // map for messages in different groups
-        this.groupUserMap = new HashMap<Group, List<User>>(); // map for users in different groups
-        this.senderMap = new HashMap<Message, User>(); // map for message to user mapping
-        this.adminMap = new HashMap<Group, User>(); // map for group to admin mapping
-//        this.userMobile = new HashSet<>();
-        this.userMap = new HashMap<String, User>(); // map for mobile number to user mapping
-        this.messageMap = new HashMap<Integer, Message>(); // map for id to message mapping
-        this.customGroupCount = 0; // count of groups
-        this.messageId = 0; // incremental message ID
-    }
-
-    public Integer getCustomGroupCount(){
-        return this.customGroupCount;
+    public int getCustomGroupCount() {
+        return customGroupCount;
     }
 
     public void setCustomGroupCount(int customGroupCount) {
@@ -45,148 +35,91 @@ public class WhatsappRepository {
         this.messageId = messageId;
     }
 
-
-
-    public Optional<User> getUser(String mobile) {
-
-        if(userMap.containsKey(mobile)) return Optional.of(userMap.get(mobile));
-        return Optional.empty();
+    public WhatsappRepository(){
+        this.groupMessageMap = new HashMap<Group, List<Message>>();
+        this.groupUserMap = new HashMap<Group, List<User>>();
+        this.senderMap = new HashMap<Message, User>();
+        this.adminMap = new HashMap<Group, User>();
+        this.mobileUserMap = new HashMap<>();
+        this.messageMap = new HashMap<>();
+        this.groupMap = new HashMap<>();
+        this.customGroupCount = 0;
+        this.messageId = 0;
     }
 
-    public void adduser(User user) {
-
-        userMap.put(user.getMobile(), user);
-        return;
+    public void createUser(String mobile, User user) {
+        mobileUserMap.put(mobile,user);
     }
 
-    public Integer createMessage(String content) {
-
-        messageId++;
-        Message message = new Message(messageId,content);
-        messageMap.put(messageId,message);
-
-        return messageId;
-    }
-
-    public Group createNewChat(List<User> users) {
-
-        Group chat = new Group(users.get(1).getName(),2);
-        this.groupUserMap.put(chat,users);
-        return chat;
-    }
-
-    public Group createGroup(List<User> users) {
-
-        this.customGroupCount++;
-        String nameGroup = "Group " + this.customGroupCount;
-
-        Group newGroup = new Group(nameGroup,users.size());
-        this.groupUserMap.put(newGroup,users);
-        this.adminMap.put(newGroup,users.get(0));
-
-        return newGroup;
-    }
-
-
-    public Optional<List<User>> getUsersfromGroup(Group group) {
-
-        if(this.groupUserMap.containsKey(group))
-            return Optional.of(this.groupUserMap.get(group));
-
-        return Optional.empty();
-    }
-
-    public Integer sendMessage(User sender, Message message, Group group) {
-
-        List<Message> oldMessages = new ArrayList<>();
-        if(this.groupMessageMap.containsKey(group))
-            oldMessages = this.groupMessageMap.get(group);
-
-        oldMessages.add(message);
-        this.groupMessageMap.put(group,oldMessages);
-        this.senderMap.put(message,sender);
-
-        return oldMessages.size();
-    }
-
-    public User getAdmin(Group group) {
-
-        return this.adminMap.get(group);
-    }
-
-    public void changeAdmin(User user, Group group) {
-
-        this.adminMap.put(group,user);
-        return;
-    }
-
-    public Optional<Group> findUserGroup(User user) {
-
-        for (Group group : groupUserMap.keySet()){
-
-            List<User> users = groupUserMap.get(group);
-            if(users.contains(user)) return Optional.of(group);
+    public Optional<User> getUserByMobile(String mobile) {
+        if(mobileUserMap.containsKey(mobile)){
+            return Optional.of(mobileUserMap.get(mobile));
         }
-
         return Optional.empty();
+
     }
 
-    public Integer removeUser(User user, Group group) {
-
-        List<User> groupUsers = groupUserMap.get(group);
-        groupUsers.remove(user);
-        groupUserMap.put(group,groupUsers);
-
-        List<Message> msgsToDelete = getMessagesToDelete(user);
-
-        deleteFromMessageMap(msgsToDelete);
-
-        deleteFromGroupMessageMap(msgsToDelete,group);
-        //If user is removed successfully, return (the updated number of users in the group + the updated number of messages in group + the updated number of overall messages)
-
-        return groupUsers.size() + groupMessageMap.get(group).size() + this.messageId;
+    public void createGroup(Group group, List<User> users) {
+        groupUserMap.put(group,users);
+        adminMap.put(group,users.get(0));
     }
 
-    private void deleteFromGroupMessageMap(List<Message> msgsToDelete, Group group) {
+    public void createMessage(Message message) {
+        messageMap.put(message.getId(),message);
+    }
 
-        List<Message> allMsgs = groupMessageMap.get(group);
+    public Optional<Group> getGroup(Group group) {
+        if(groupUserMap.containsKey(group)){
+            return Optional.of(group);
+        }
+        else return Optional.empty();
+    }
 
-        for(Message msg : msgsToDelete){
-
-            if(allMsgs.contains(msg)){
-                allMsgs.remove(msg);
+    public Optional<User> getUserInGroup(Group group, User sender) {
+        for(User user : groupUserMap.get(group)){
+            if((user.getMobile()).equals(sender.getMobile())){
+                return Optional.of(user);
             }
         }
-
-        groupMessageMap.put(group,allMsgs);
-        return;
+        return Optional.empty();
     }
 
-    private void deleteFromMessageMap(List<Message> msgsToDelete) {
+    public int sendMessage(Message message, User sender, Group group) {
+        int numberOfMessageInGroup;
+        if(groupMessageMap.containsKey(group)){
+            List<Message> oldList = groupMessageMap.get(group);
+            oldList.add(message);
+            numberOfMessageInGroup = oldList.size();
+            groupMessageMap.put(group,oldList);
 
-        for(Message msg : msgsToDelete){
-            if(messageMap.containsKey(msg.getId()))
-                messageMap.remove(msg.getId());
         }
-        return;
+        else {
+            List<Message> newList = new ArrayList<>();
+            newList.add(message);
+            numberOfMessageInGroup = newList.size();
+            groupMessageMap.put(group,newList);
+        }
+        senderMap.put(message,sender);
+        return numberOfMessageInGroup;
+
     }
 
-    private List<Message> getMessagesToDelete(User user) {
+    public Optional<User> getAdmin(Group group) {
+        return Optional.of(adminMap.get(group));
+    }
 
-        List<Message> msgs = new ArrayList<>();
+    public void changeAdmin(Group group, User user) {
+        adminMap.put(group,user);
+    }
 
-        for(Message msg : senderMap.keySet()){
+    public void addGroup(Group group) {
+        groupMap.put(group.getName(),group);
+    }
 
-            if(senderMap.get(msg).equals(user)){
-                msgs.add(msg);
-            }
+    public Optional<Group> getGroupByName(String groupName) {
+        if(groupMap.containsKey(groupName)){
+            return Optional.of(groupMap.get(groupName));
         }
-
-        for(Message msg : msgs){
-            if(senderMap.containsKey(msg))
-                senderMap.remove(msg);
-        }
-
-        return msgs;
+        else return Optional.empty();
     }
 }

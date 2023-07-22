@@ -1,21 +1,18 @@
 package com.driver;
 
+import java.util.Calendar;
 import java.util.Date;
 
 public class Message {
     private int id;
     private String content;
-
     private Date timestamp;
-
-    public Message(){}
-
     public Message(int id, String content) {
         this.id = id;
         this.content = content;
-        this.timestamp = new Date();
+        Calendar calender = Calendar.getInstance();
+        this.timestamp = calender.getTime();
     }
-
 
     public int getId() {
         return id;
@@ -40,4 +37,5 @@ public class Message {
     public void setTimestamp(Date timestamp) {
         this.timestamp = timestamp;
     }
+
 }
